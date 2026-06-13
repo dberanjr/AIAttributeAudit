@@ -1,0 +1,21 @@
+{
+  "$schema": "./.dt-app/app.config.schema.json",
+  "environmentUrl": "https://your-tenant.apps.dynatrace.com/",
+  "app": {
+    "name": "AI Attributes Audit",
+    "version": "0.0.5",
+    "description": "Audit OpenTelemetry GenAI span attribute coverage across your AI fleet",
+    "id": "my.ai.attributes.audit",
+    "scopes": [
+      { "name": "storage:spans:read",           "comment": "Read spans for attribute-coverage auditing" },
+      { "name": "storage:buckets:read",          "comment": "Required by Grail for bucket-level access to the spans table" },
+      { "name": "storage:entities:read",         "comment": "Resolve AppCI entity IDs and service names for scope resolution" },
+      { "name": "storage:lookups:read",          "comment": "Lookup CMDB entities for scope resolution" },
+      { "name": "storage:filter-segments:read",  "comment": "Read tenant-defined filter segments to apply as scope filters" },
+      { "name": "storage:files:read",            "comment": "Read tabular files under /lookups/dynatrace/* used by segment variable resolution" },
+      { "name": "storage:smartscape:read",       "comment": "Read smartscape.nodes / smartscape.relations referenced by topology-based segment variable queries" },
+      { "name": "state:user-app-states:read",    "comment": "Read per-user persisted state (scan limit, sampling)" },
+      { "name": "state:user-app-states:write",   "comment": "Persist per-user state changes (scan limit, sampling)" }
+    ]
+  }
+}
