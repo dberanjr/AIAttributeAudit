@@ -1,9 +1,9 @@
 /**
  * AAA (AI Attribute Audit) — coverage catalog.
  *
- * Mirrors the 10 category sections of the Dynatrace "AI Observability
- * Attribute Coverage" notebook, which in turn mirrors the appendix of the
- * AI Observability 3.0 Telemetry document. Each section lists every attribute
+ * Mirrors the 10 category sections of the AI Observability Attribute Coverage
+ * notebook, which in turn mirrors the appendix of the AI Observability 3.0
+ * Telemetry document. Each section lists every attribute
  * the observability app wants the AI workload to emit, what that attribute
  * buys you, and a `expr` predicate used to count how many spans carry it.
  *

@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Flex, Surface } from "@dynatrace/strato-components/layouts";
 import { Heading, Text } from "@dynatrace/strato-components/typography";
 import { Skeleton } from "@dynatrace/strato-components/content";
+import { SearchInput } from "@dynatrace/strato-components/forms";
 import { AnalyticsIcon } from "@dynatrace/strato-icons";
 import { ErrorBanner } from "../../components/ErrorState";
 import { EmptyState } from "../../components/EmptyState";
@@ -208,6 +209,7 @@ export const AttributeAuditPage = () => {
   const [selected, setSelected] = useState<{ section: AuditSection; attr: AttrResult } | null>(
     null,
   );
+  const [searchQuery, setSearchQuery] = useState("");
 
   const toggleSection = (id: string) =>
     setCollapsed((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -220,6 +222,39 @@ export const AttributeAuditPage = () => {
         .getElementById(`aaa-section-${id}`)
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
+  };
+
+  // Filter section attributes by search query (name or description).
+  // Sections with no matching attributes are excluded entirely.
+  const filteredSections = useMemo<SectionResult[]>(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return audit.sections;
+    return audit.sections
+      .map((section) => {
+        const attrs = section.attributes.filter(
+          (a) =>
+            a.spec.name.toLowerCase().includes(q) ||
+            a.spec.what.toLowerCase().includes(q),
+        );
+        if (attrs.length === 0) return null;
+        const presentCount = attrs.filter((a) => a.present).length;
+        return {
+          ...section,
+          attributes: attrs,
+          presentCount,
+          totalCount: attrs.length,
+          coveragePct: attrs.length > 0 ? (presentCount / attrs.length) * 100 : 0,
+        };
+      })
+      .filter((s): s is SectionResult => s !== null);
+  }, [audit.sections, searchQuery]);
+
+  // While a search is active, always expand sections that have matches.
+  const isSectionCollapsed = (id: string): boolean => {
+    if (searchQuery.trim() && filteredSections.some((s) => s.section.id === id)) {
+      return false;
+    }
+    return !!collapsed[id];
   };
 
   return (
@@ -243,6 +278,13 @@ export const AttributeAuditPage = () => {
             live span data — honouring the selected timeframe, scan limit, sampling,
             segments, and global filters.
           </Text>
+
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search attributes by name or description…"
+            style={{ maxWidth: 560, marginTop: 8 }}
+          />
         </Flex>
 
         {audit.error && <ErrorBanner error={audit.error} />}
@@ -305,44 +347,56 @@ export const AttributeAuditPage = () => {
             </Surface>
 
             {/* Grouped sections */}
-            {GROUPS.map((group) => (
-              <Flex key={group.id} flexDirection="column" gap={8}>
-                <Flex flexDirection="column" gap={2} style={{ marginTop: 4 }}>
-                  <Flex alignItems="center" gap={8}>
-                    <div
-                      style={{
-                        width: 3,
-                        height: 16,
-                        borderRadius: 2,
-                        background: "var(--blue)",
-                      }}
-                    />
-                    <Heading level={2} style={{ fontSize: 15, fontWeight: 700 }}>
-                      {group.title}
-                    </Heading>
-                  </Flex>
-                  <Text style={{ fontSize: 11.5, color: "var(--text-3)", paddingLeft: 11 }}>
-                    {group.blurb}
-                  </Text>
-                </Flex>
+            {searchQuery.trim() && filteredSections.length === 0 ? (
+              <Surface elevation="flat" padding={20}>
+                <Text style={{ fontSize: 13, color: "var(--text-3)" }}>
+                  No attributes match <strong>&ldquo;{searchQuery}&rdquo;</strong>. Try a shorter or different term.
+                </Text>
+              </Surface>
+            ) : (
+              GROUPS.map((group) => {
+                const groupSections = group.sectionIds
+                  .map((id) => filteredSections.find((s) => s.section.id === id))
+                  .filter((s): s is SectionResult => s !== undefined);
 
-                {group.sectionIds.map((id) => {
-                  const result = audit.sections.find((s) => s.section.id === id);
-                  if (!result) return null;
-                  return (
-                    <SectionCard
-                      key={id}
-                      result={result}
-                      collapsed={!!collapsed[id]}
-                      onToggle={() => toggleSection(id)}
-                      onAttrClick={(attr) =>
-                        setSelected({ section: result.section, attr })
-                      }
-                    />
-                  );
-                })}
-              </Flex>
-            ))}
+                if (groupSections.length === 0) return null;
+
+                return (
+                  <Flex key={group.id} flexDirection="column" gap={8}>
+                    <Flex flexDirection="column" gap={2} style={{ marginTop: 4 }}>
+                      <Flex alignItems="center" gap={8}>
+                        <div
+                          style={{
+                            width: 3,
+                            height: 16,
+                            borderRadius: 2,
+                            background: "var(--blue)",
+                          }}
+                        />
+                        <Heading level={2} style={{ fontSize: 15, fontWeight: 700 }}>
+                          {group.title}
+                        </Heading>
+                      </Flex>
+                      <Text style={{ fontSize: 11.5, color: "var(--text-3)", paddingLeft: 11 }}>
+                        {group.blurb}
+                      </Text>
+                    </Flex>
+
+                    {groupSections.map((result) => (
+                      <SectionCard
+                        key={result.section.id}
+                        result={result}
+                        collapsed={isSectionCollapsed(result.section.id)}
+                        onToggle={() => toggleSection(result.section.id)}
+                        onAttrClick={(attr) =>
+                          setSelected({ section: result.section, attr })
+                        }
+                      />
+                    ))}
+                  </Flex>
+                );
+              })
+            )}
 
             {/* Caveat */}
             <Surface elevation="flat" padding={12}>

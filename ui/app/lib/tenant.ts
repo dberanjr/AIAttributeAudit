@@ -19,11 +19,9 @@ const envHost = (): string => {
   }
 };
 
-/** Human-friendly tenant name, e.g. "nonprod" / "production". */
+/** Human-friendly tenant name derived from the environment hostname prefix. */
 export const tenantLabel = (): string => {
   const host = envHost();
-
-
   const first = host.split(".")[0];
   // Avoid surfacing an opaque sandbox alias; fall back to a neutral label.
   return first && first.length > 0 && first.length <= 24 ? first : "Dynatrace";

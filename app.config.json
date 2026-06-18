@@ -3,7 +3,7 @@
   "environmentUrl": "https://your-tenant.apps.dynatrace.com/",
   "app": {
     "name": "AI Attributes Audit",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "description": "Audit OpenTelemetry GenAI span attribute coverage across your AI fleet",
     "id": "my.ai.attributes.audit",
     "scopes": [

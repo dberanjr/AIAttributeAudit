@@ -54,9 +54,9 @@ export const scopeFilterClause = (serviceIds: string[] | null): string =>
  *   - finish_reasons contains "refusal" / "content_filter" (model declined or
  *     was guardrail-blocked — a logical failure on a 200 response)
  *
- * Validated on united nonprod: catches ~3x more failures than the prior
- * exception-or-http>=400 rule (logical failures are otherwise invisible
- * because nearly all spans are HTTP 200 with an unset span.status_code).
+ * Catches ~3x more failures than a simple exception-or-http>=400 rule
+ * (logical failures are otherwise invisible because nearly all spans are
+ * HTTP 200 with an unset span.status_code).
  */
 export const LOGICAL_ERROR_EXPR = `(
     lower(coalesce(span.status_code, "")) == "error"
